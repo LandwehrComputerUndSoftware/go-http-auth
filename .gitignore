@@ -1,4 +1,6 @@
 *~
+*.idea
+.idea
 *.a
 *.6
 *.out
