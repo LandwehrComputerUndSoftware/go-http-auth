@@ -261,12 +261,12 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 	return context.WithValue(ctx, infoKey, info)
 }
 
-func NewDigestAuthenticator(realm string, secrets SecretProvider) *DigestAuth {
+func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool) *DigestAuth {
 	da := &DigestAuth{
 		Opaque:               RandomKey(),
 		Realm:                realm,
 		Secrets:              secrets,
-		PlainTextSecrets:     false,
+		PlainTextSecrets:     plainTextSecrets,
 		ClientCacheSize:      DefaultClientCacheSize,
 		ClientCacheTolerance: DefaultClientCacheTolerance,
 		clients:              map[string]*digest_client{}}
