@@ -144,7 +144,7 @@ func (da *DigestAuth) CheckAuth(r *http.Request) (username string, authinfo *str
 	}
 
 	// Check if the requested URI matches auth header
-	if r.RequestURI != auth["uri"] {
+	if r.RequestURI != auth["uri"] && da.CheckUrl {
 		// We allow auth["uri"] to be a full path prefix of request-uri
 		// for some reason lost in history, which is probably wrong, but
 		// used to be like that for quite some time
