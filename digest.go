@@ -20,12 +20,16 @@ type digest_client struct {
 }
 
 type DigestAuth struct {
-	Realm            string
-	Opaque           string
-	Secrets          SecretProvider
-	CheckUrl	 bool
-	PlainTextSecrets bool
-	IgnoreNonceCount bool
+	Realm            		string
+	Opaque           		string
+	Secrets          		SecretProvider
+	CheckUrl	 		bool
+	PlainTextSecrets 		bool
+	IgnoreNonceCount 		bool
+
+	// A Hock which can use for manipulate the Header
+	RequireAuthHeaderHook 		func(w http.ResponseWriter)
+
 	// Headers used by authenticator. Set to ProxyHeaders to use with
 	// proxy server. When nil, NormalHeaders are used.
 	Headers *Headers
@@ -90,6 +94,11 @@ func (a *DigestAuth) RequireAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	nonce := RandomKey()
 	a.clients[nonce] = &digest_client{nc: 0, last_seen: time.Now().UnixNano()}
+
+	if a.RequireAuthHeaderHook != nil {
+		a.RequireAuthHeaderHook(w)
+	}
+
 	w.Header().Set(contentType, a.Headers.V().UnauthContentType)
 	w.Header().Set(a.Headers.V().Authenticate,
 		fmt.Sprintf(`Digest realm="%s", nonce="%s", opaque="%s", algorithm="MD5", qop="auth"`,
@@ -262,15 +271,16 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 	return context.WithValue(ctx, infoKey, info)
 }
 
-func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool, checkUrl bool) *DigestAuth {
+func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool, checkUrl bool, requireAuthHeaderHook func(w http.ResponseWriter)) *DigestAuth {
 	da := &DigestAuth{
-		Opaque:               RandomKey(),
-		Realm:                realm,
-		Secrets:              secrets,
-		PlainTextSecrets:     plainTextSecrets,
-		CheckUrl: 	      checkUrl,
-		ClientCacheSize:      DefaultClientCacheSize,
-		ClientCacheTolerance: DefaultClientCacheTolerance,
-		clients:              map[string]*digest_client{}}
+		Opaque:               	RandomKey(),
+		Realm:                	realm,
+		Secrets:              	secrets,
+		PlainTextSecrets:    	plainTextSecrets,
+		CheckUrl: 	      	checkUrl,
+		RequireAuthHeaderHook: 	requireAuthHeaderHook,
+		ClientCacheSize:      	DefaultClientCacheSize,
+		ClientCacheTolerance: 	DefaultClientCacheTolerance,
+		clients:              	map[string]*digest_client{}}
 	return da
 }
