@@ -23,6 +23,7 @@ type DigestAuth struct {
 	Realm            string
 	Opaque           string
 	Secrets          SecretProvider
+	CheckUrl	 bool
 	PlainTextSecrets bool
 	IgnoreNonceCount bool
 	// Headers used by authenticator. Set to ProxyHeaders to use with
@@ -261,12 +262,13 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 	return context.WithValue(ctx, infoKey, info)
 }
 
-func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool) *DigestAuth {
+func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool, checkUrl bool) *DigestAuth {
 	da := &DigestAuth{
 		Opaque:               RandomKey(),
 		Realm:                realm,
 		Secrets:              secrets,
 		PlainTextSecrets:     plainTextSecrets,
+		CheckUrl: 	      checkUrl,
 		ClientCacheSize:      DefaultClientCacheSize,
 		ClientCacheTolerance: DefaultClientCacheTolerance,
 		clients:              map[string]*digest_client{}}
