@@ -226,7 +226,10 @@ const DefaultClientCacheTolerance = 100
 */
 func (a *DigestAuth) Wrap(wrapped AuthenticatedHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if username, authinfo := a.CheckAuth(r); username == "" {
+		if r.Method == "OPTIONS" {
+			a.RequireAuthHeaderHook(w)
+			w.WriteHeader(http.StatusOK)
+		} else if username, authinfo := a.CheckAuth(r); username == "" {
 			a.RequireAuth(w, r)
 		} else {
 			ar := &AuthenticatedRequest{Request: *r, Username: username}
