@@ -20,12 +20,13 @@ type digest_client struct {
 }
 
 type DigestAuth struct {
-	Realm            		string
-	Opaque           		string
-	Secrets          		SecretProvider
-	CheckUrl	 		bool
-	PlainTextSecrets 		bool
-	IgnoreNonceCount 		bool
+	Realm            			string
+	Opaque           			string
+	Secrets          			SecretProvider
+	CheckUrl	 			bool
+	PlainTextSecrets 			bool
+	RemoveAuthForHttpMethodOptions 		bool
+	IgnoreNonceCount 		 	bool
 
 	// A Hock which can use for manipulate the Header
 	RequireAuthHeaderHook 		func(w http.ResponseWriter)
@@ -226,7 +227,7 @@ const DefaultClientCacheTolerance = 100
 */
 func (a *DigestAuth) Wrap(wrapped AuthenticatedHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
+		if a.RemoveAuthForHttpMethodOptions && r.Method == "OPTIONS" {
 			a.RequireAuthHeaderHook(w)
 			w.WriteHeader(http.StatusOK)
 		} else if username, authinfo := a.CheckAuth(r); username == "" {
@@ -274,13 +275,14 @@ func (a *DigestAuth) NewContext(ctx context.Context, r *http.Request) context.Co
 	return context.WithValue(ctx, infoKey, info)
 }
 
-func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool, checkUrl bool, requireAuthHeaderHook func(w http.ResponseWriter)) *DigestAuth {
+func NewDigestAuthenticator(realm string, secrets SecretProvider, plainTextSecrets bool, checkUrl bool, removeAuthForHttpMethodOptions bool, requireAuthHeaderHook func(w http.ResponseWriter)) *DigestAuth {
 	da := &DigestAuth{
 		Opaque:               	RandomKey(),
 		Realm:                	realm,
 		Secrets:              	secrets,
 		PlainTextSecrets:    	plainTextSecrets,
 		CheckUrl: 	      	checkUrl,
+		RemoveAuthForHttpMethodOptions:  removeAuthForHttpMethodOptions,
 		RequireAuthHeaderHook: 	requireAuthHeaderHook,
 		ClientCacheSize:      	DefaultClientCacheSize,
 		ClientCacheTolerance: 	DefaultClientCacheTolerance,
